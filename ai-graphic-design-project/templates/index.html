@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Graphic Design</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #f7fafc, #edf2f7);
+      color: #2d3748;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .btn-primary {
+      background: linear-gradient(45deg, #6b46c1, #ed64a6);
+      color: white;
+      transition: all 0.3s ease;
+    }
+    .btn-primary:hover {
+      background: linear-gradient(45deg, #553c9a, #d53f8c);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(107, 70, 193, 0.4);
+    }
+    .btn-secondary {
+      background: #e2e8f0;
+      color: #34495e;
+      transition: all 0.3s ease;
+    }
+    .btn-secondary:hover {
+      background: #cbd5e0;
+      transform: translateY(-2px);
+    }
+    .btn-disabled {
+      background: #e2e8f0;
+      color: #a0aec0;
+      cursor: not-allowed;
+    }
+    canvas {
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      animation: fadeIn 0.5s ease;
+    }
+    .sidebar {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+    }
+    .sidebar-section {
+      border-bottom: 1px solid #e0e6ed;
+    }
+    .sidebar-section:last-child {
+      border-bottom: none;
+    }
+    .carousel {
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scroll-behavior: smooth;
+      gap: 16px;
+      padding: 16px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    .carousel-item {
+      flex: 0 0 150px;
+      scroll-snap-align: start;
+    }
+    .reference-img {
+      border-radius: 4px;
+      transition: transform 0.3s ease;
+    }
+    .reference-img:hover {
+      transform: scale(1.05);
+    }
+    input {
+      border: 2px solid #e0e6ed;
+      border-radius: 8px;
+      padding: 8px;
+      transition: all 0.3s ease;
+    }
+    input:focus {
+      outline: none;
+      border-color: #6b46c1;
+      box-shadow: 0 0 8px rgba(107, 70, 193, 0.2);
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      animation: fadeIn 0.3s ease;
+    }
+    .nav-link {
+      transition: color 0.3s ease;
+      cursor: pointer;
+    }
+    .nav-link:hover {
+      color: #6b46c1;
+    }
+    .footer {
+      background: #34495e;
+      color: white;
+    }
+    #fileInput {
+      display: none;
+    }
+    .loading {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #6b46c1;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+  <!-- Navigation Bar -->
+  <nav class="fixed top-0 w-full bg-white shadow-sm z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+      <div class="flex items-center">
+        <img src="https://via.placeholder.com/40" alt="Logo" class="h-10">
+        <span class="ml-3 text-xl font-semibold text-gray-800">AI Design</span>
+      </div>
+      <div class="flex space-x-6">
+        <a href="#" class="nav-link text-gray-600 hover:text-purple-600">Home</a>
+        <span onclick="showTemplatesModal()" class="nav-link text-gray-600 hover:text-purple-600">Templates</span>
+        <span onclick="showToolsModal()" class="nav-link text-gray-600 hover:text-purple-600">Tools</span>
+      </div>
+    </div>
+  </nav>
+  <!-- Hero Section -->
+  <div class="pt-24 pb-8 text-center">
+    <h1 class="text-4xl sm:text-5xl font-bold text-gray-800 mb-4">
+      AI Graphic Design Assistant
+    </h1>
+    <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+      Create stunning designs with ease using our AI-powered tools. No coding required!
+    </p>
+  </div>
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col md:flex-row max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 gap-6">
+    <!-- Sidebar (Controls) -->
+    <div class="md:w-64 sidebar p-4">
+      <div class="sidebar-section p-4">
+        <h3 class="text-sm font-semibold text-gray-700 mb-2">Designs</h3>
+        <div class="space-y-2">
+          <button onclick="fetchAbstractClassic()" class="btn-secondary w-full text-left px-3 py-2 rounded text-sm">
+            Classic
+          </button>
+          <button onclick="fetchSpiral()" class="btn-secondary w-full text-left px-3 py-2 rounded text-sm">
+            Spiral
+          </button>
+          <button onclick="fetchWave()" class="btn-secondary w-full text-left px-3 py-2 rounded text-sm">
+            Wave
+          </button>
+          <button onclick="fetchFractal()" class="btn-secondary w-full text-left px-3 py-2 rounded text-sm">
+            Fractal
+          </button>
+          <button onclick="fetchAbstractGrid()" class="btn-secondary w-full text-left px-3 py-2 rounded text-sm">
+            Grid
+          </button>
+        </div>
+      </div>
+      <div class="sidebar-section p-4">
+        <h3 class="text-sm font-semibold text-gray-700 mb-2">Tools</h3>
+        <div class="space-y-2">
+          <button onclick="clearCanvas()" class="btn-secondary w-full text-left px-3 py-2 rounded text-sm">
+            Clear Canvas
+          </button>
+          <button onclick="showExportModal()" class="btn-secondary w-full text-left px-3 py-2 rounded text-sm">
+            Export Design
+          </button>
+          <button onclick="toggleReferences()" class="btn-secondary w-full text-left px-3 py-2 rounded text-sm" id="reference-btn">
+            Show References
+          </button>
+          <button id="upload-btn" onclick="document.getElementById('fileInput').click()" class="btn-secondary w-full text-left px-3 py-2 rounded text-sm">
+            Upload Photo
+          </button>
+          <input type="file" id="fileInput" accept="image/png,image/jpeg" onchange="uploadImage()">
+        </div>
+      </div>
+    </div>
+    <!-- Canvas Area -->
+    <div class="flex-1 flex flex-col">
+      <!-- Toolbar -->
+      <div class="bg-white rounded-t-lg shadow-sm p-4 flex items-center gap-4 mb-2">
+        <input
+          id="textInput"
+          type="text"
+          placeholder="Enter animal (e.g., bird, dog, fish)"
+          class="flex-1 py-2 px-3 text-sm"
+        />
+        <button
+          onclick="generateImage()"
+          class="btn-primary font-semibold text-sm py-2 px-4 rounded"
+        >
+          Generate Animal
+        </button>
+      </div>
+      <!-- Canvas Container -->
+      <div id="canvas-container" class="bg-white rounded-b-lg shadow-sm p-6 flex justify-center relative">
+        <div id="loading-indicator" class="loading">Uploading...</div>
+        <!-- Canvas is dynamically created by p5.js -->
+      </div>
+    </div>
+  </div>
+  <!-- Reference Gallery -->
+  <div id="reference-gallery" class="hidden carousel max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
+    <!-- Reference images will be populated here -->
+  </div>
+  <!-- Footer -->
+  <footer class="footer py-6 text-center">
+    <p class="text-sm">Powered by AI Graphic Design Assistant</p>
+  </footer>
+  <!-- Export Modal -->
+  <div id="export-modal" class="modal">
+    <div class="modal-content">
+      <h2 class="text-lg font-semibold mb-4">Export Design</h2>
+      <div class="space-y-3">
+        <button onclick="exportDesign('png')" class="btn-primary w-full py-2 rounded">Export as PNG</button>
+        <button onclick="exportDesign('jpg')" class="btn-primary w-full py-2 rounded">Export as JPG</button>
+        <button onclick="exportDesign('svg')" class="btn-primary w-full py-2 rounded">Export as SVG</button>
+        <button onclick="closeExportModal()" class="btn-secondary w-full py-2 rounded">Cancel</button>
+      </div>
+    </div>
+  </div>
+  <!-- Templates Modal -->
+  <div id="templates-modal" class="modal">
+    <div class="modal-content">
+      <h2 class="text-lg font-semibold mb-4">Choose a Template</h2>
+      <div class="space-y-3">
+        <button onclick="applyTemplate('poster')" class="btn-primary w-full py-2 rounded">Poster</button>
+        <button onclick="applyTemplate('social')" class="btn-primary w-full py-2 rounded">Social Media</button>
+        <button onclick="applyTemplate('card')" class="btn-primary w-full py-2 rounded">Card</button>
+        <button onclick="closeTemplatesModal()" class="btn-secondary w-full py-2 rounded">Cancel</button>
+      </div>
+    </div>
+  </div>
+  <!-- Tools Modal -->
+  <div id="tools-modal" class="modal">
+    <div class="modal-content">
+      <h2 class="text-lg font-semibold mb-4">Design Tools</h2>
+      <div class="space-y-3">
+        <button onclick="addText()" class="btn-primary w-full py-2 rounded">Add Text</button>
+        <button onclick="cropImage()" class="btn-primary w-full py-2 rounded">Crop Image</button>
+        <button onclick="closeToolsModal()" class="btn-secondary w-full py-2 rounded">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let canvas;
+    let currentElements = [];
+    let referencesVisible = false;
+    let uploadedImage = null;
+
+    // Initialize p5.js canvas
+    function setup() {
+      canvas = createCanvas(600, 400);
+      canvas.parent('canvas-container');
+      background(255);
+      canvas.class('fade-in');
+      loadReferences();
+    }
+
+    // Fetch design functions
+    async function fetchAbstractClassic() {
+      try {
+        const response = await fetch('/api/abstract_classic');
+        const data = await response.json();
+        currentElements = data.elements;
+        uploadedImage = null;
+        drawDesign(data.elements);
+      } catch (error) {
+        console.error('Error fetching Abstract Classic:', error);
+      }
+    }
+
+    async function fetchSpiral() {
+      try {
+        const response = await fetch('/api/abstract_spiral');
+        const data = await response.json();
+        currentElements = data.elements;
+        uploadedImage = null;
+        drawDesign(data.elements);
+      } catch (error) {
+        console.error('Error fetching Abstract Spiral:', error);
+      }
+    }
+
+    async function fetchWave() {
+      try {
+        const response = await fetch('/api/abstract_wave');
+        const data = await response.json();
+        currentElements = data.elements;
+        uploadedImage = null;
+        drawDesign(data.elements);
+      } catch (error) {
+        console.error('Error fetching Abstract Wave:', error);
+      }
+    }
+
+    async function fetchFractal() {
+      try {
+        const response = await fetch('/api/abstract_fractal');
+        const data = await response.json();
+        currentElements = data.elements;
+        uploadedImage = null;
+        drawDesign(data.elements);
+      } catch (error) {
+        console.error('Error fetching Abstract Fractal:', error);
+      }
+    }
+
+    async function fetchAbstractGrid() {
+      try {
+        const response = await fetch('/api/abstract_grid');
+        const data = await response.json();
+        currentElements = data.elements;
+        uploadedImage = null;
+        drawDesign(data.elements);
+      } catch (error) {
+        console.error('Error fetching Abstract Grid:', error);
+      }
+    }
+
+    // Generate animal image
+    async function generateImage() {
+      try {
+        const input = document.getElementById('textInput').value;
+        const response = await fetch('/api/generate_image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ subject: input })
+        });
+        const data = await response.json();
+        if (data.error) {
+          alert(data.error);
+          return;
+        }
+        currentElements = data.elements;
+        uploadedImage = null;
+        drawDesign(data.elements);
+      } catch (error) {
+        console.error('Error generating image:', error);
+      }
+    }
+
+    // Upload image
+    async function uploadImage() {
+      const fileInput = document.getElementById('fileInput');
+      const uploadBtn = document.getElementById('upload-btn');
+      const loadingIndicator = document.getElementById('loading-indicator');
+
+      if (fileInput.files.length === 0) {
+        console.warn('No file selected');
+        return;
+      }
+
+      // Disable button and show loading
+      uploadBtn.classList.add('btn-disabled');
+      uploadBtn.disabled = true;
+      loadingIndicator.style.display = 'block';
+
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+
+      try {
+        console.log('Uploading file:', fileInput.files[0].name);
+        const response = await fetch('/api/upload_image', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await response.json();
+        if (data.error) {
+          console.error('Upload error:', data.error);
+          alert(data.error);
+          return;
+        }
+        console.log('Upload successful, image URL:', data.image_url);
+        currentElements = [];
+        uploadedImage = loadImage(data.image_url, () => {
+          console.log('Image loaded in p5.js');
+          drawDesign([]);
+          loadingIndicator.style.display = 'none';
+          uploadBtn.classList.remove('btn-disabled');
+          uploadBtn.disabled = false;
+          fileInput.value = '';
+        }, () => {
+          console.error('Failed to load image in p5.js');
+          alert('Failed to load image');
+          loadingIndicator.style.display = 'none';
+          uploadBtn.classList.remove('btn-disabled');
+          uploadBtn.disabled = false;
+          fileInput.value = '';
+        });
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        alert('Failed to upload image: ' + error.message);
+        loadingIndicator.style.display = 'none';
+        uploadBtn.classList.remove('btn-disabled');
+        uploadBtn.disabled = false;
+        fileInput.value = '';
+      }
+    }
+
+    // Apply template
+    async function applyTemplate(template) {
+      try {
+        let endpoint;
+        switch (template) {
+          case 'poster':
+            endpoint = '/api/abstract_classic';
+            break;
+          case 'social':
+            endpoint = '/api/abstract_spiral';
+            break;
+          case 'card':
+            endpoint = '/api/abstract_wave';
+            break;
+          default:
+            return;
+        }
+        const response = await fetch(endpoint);
+        const data = await response.json();
+        currentElements = data.elements;
+        uploadedImage = null;
+        drawDesign(data.elements);
+        closeTemplatesModal();
+      } catch (error) {
+        console.error(`Error applying ${template} template:`, error);
+      }
+    }
+
+    // Add text
+    function addText() {
+      const text = prompt('Enter text to add:');
+      if (text) {
+        currentElements.push({
+          type: 'text',
+          content: text,
+          x: 300,
+          y: 200,
+          size: 24,
+          color: [0, 0, 0],
+          align: 'center'
+        });
+        drawDesign(currentElements);
+      }
+      closeToolsModal();
+    }
+
+    // Crop image
+    function cropImage() {
+      if (!uploadedImage || uploadedImage.width === 0) {
+        alert('Please upload an image first.');
+        closeToolsModal();
+        return;
+      }
+      let size = Math.min(uploadedImage.width, uploadedImage.height);
+      let x = (uploadedImage.width - size) / 2;
+      let y = (uploadedImage.height - size) / 2;
+      uploadedImage = uploadedImage.get(x, y, size, size);
+      drawDesign([]);
+      closeToolsModal();
+    }
+
+    // Draw design on canvas
+    function drawDesign(elements) {
+      background(255);
+      if (uploadedImage && uploadedImage.width > 0) {
+        let scale = Math.min(600 / uploadedImage.width, 400 / uploadedImage.height);
+        let imgWidth = uploadedImage.width * scale;
+        let imgHeight = uploadedImage.height * scale;
+        let x = (600 - imgWidth) / 2;
+        let y = (400 - imgHeight) / 2;
+        image(uploadedImage, x, y, imgWidth, imgHeight);
+      }
+      elements.forEach(el => {
+        if (el.type === 'background') {
+          background(el.color[0], el.color[1], el.color[2]);
+        } else if (el.type === 'circle') {
+          push();
+          translate(el.x, el.y);
+          rotate(radians(el.rotation || 0));
+          fill(el.gradient ? 
+            lerpColor(color(el.gradient[0][0], el.gradient[0][1], el.gradient[0][2]), 
+                      color(el.gradient[1][0], el.gradient[1][1], el.gradient[1][2]), 0.5) : 
+            color(el.color[0], el.color[1], el.color[2]), el.alpha);
+          noStroke();
+          ellipse(0, 0, el.size, el.size);
+          pop();
+        } else if (el.type === 'rect') {
+          push();
+          translate(el.x + el.size / 2, el.y + el.size / 2);
+          rotate(radians(el.rotation || 0));
+          fill(el.gradient ? 
+            lerpColor(color(el.gradient[0][0], el.gradient[0][1], el.gradient[0][2]), 
+                      color(el.gradient[1][0], el.gradient[1][1], el.gradient[1][2]), 0.5) : 
+            color(el.color[0], el.color[1], el.color[2]), el.alpha);
+          noStroke();
+          rect(-el.size / 2, -el.size / 2, el.size, el.size);
+          pop();
+        } else if (el.type === 'triangle') {
+          push();
+          translate(el.x, el.y);
+          rotate(radians(el.rotation || 0));
+          fill(el.gradient ? 
+            lerpColor(color(el.gradient[0][0], el.gradient[0][1], el.gradient[0][2]), 
+                      color(el.gradient[1][0], el.gradient[1][1], el.gradient[1][2]), 0.5) : 
+            color(el.color[0], el.color[1], el.color[2]), el.alpha);
+          noStroke();
+          triangle(0, 0, el.size / 2, el.size, -el.size / 2, el.size);
+          pop();
+        } else if (el.type === 'line') {
+          stroke(el.color[0], el.color[1], el.color[2]);
+          strokeWeight(el.weight);
+          line(el.x1, el.y1, el.x2, el.y2);
+        } else if (el.type === 'polygon') {
+          fill(el.gradient[0][0], el.gradient[0][1], el.gradient[0][2], el.alpha);
+          noStroke();
+          beginShape();
+          el.points.forEach(p => vertex(p[0], p[1]));
+          endShape(CLOSE);
+        } else if (el.type === 'ellipse') {
+          push();
+          translate(el.x, el.y);
+          rotate(radians(el.rotation || 0));
+          fill(el.color[0], el.color[1], el.color[2], el.alpha);
+          noStroke();
+          ellipse(0, 0, el.width, el.height);
+          pop();
+        } else if (el.type === 'text') {
+          push();
+          textAlign(CENTER, CENTER);
+          textSize(el.size);
+          fill(el.color[0], el.color[1], el.color[2]);
+          text(el.content, el.x, el.y);
+          pop();
+        }
+      });
+      canvas.class('fade-in');
+    }
+
+    // Clear canvas
+    function clearCanvas() {
+      background(255);
+      currentElements = [];
+      uploadedImage = null;
+      canvas.class('fade-in');
+    }
+
+    // Export design
+    async function exportDesign(format) {
+      try {
+        if (format === 'png' || format === 'jpg') {
+          const imgData = canvas.elt.toDataURL(`image/${format}`);
+          const response = await fetch('/api/export', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ format, image: imgData })
+          });
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `design.${format}`;
+          a.click();
+          window.URL.revokeObjectURL(url);
+        } else if (format === 'svg') {
+          const response = await fetch('/api/export', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ format, elements: currentElements })
+          });
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'design.svg';
+          a.click();
+          window.URL.revokeObjectURL(url);
+        }
+        closeExportModal();
+      } catch (error) {
+        console.error('Error exporting design:', error);
+      }
+    }
+
+    // Load reference images
+    async function loadReferences() {
+      try {
+        const response = await fetch('/api/references');
+        const data = await response.json();
+        const gallery = document.getElementById('reference-gallery');
+        data.references.forEach(ref => {
+          const div = document.createElement('div');
+          div.className = 'carousel-item';
+          div.innerHTML = `
+            <img src="${ref.url}" alt="${ref.style}" class="reference-img w-full h-40 object-cover">
+            <div class="text-center text-xs font-medium text-gray-700 mt-2">${ref.style}</div>
+          `;
+          gallery.appendChild(div);
+        });
+      } catch (error) {
+        console.error('Error loading references:', error);
+      }
+    }
+
+    // Toggle reference gallery
+    function toggleReferences() {
+      referencesVisible = !referencesVisible;
+      const gallery = document.getElementById('reference-gallery');
+      gallery.classList.toggle('hidden', !referencesVisible);
+      const button = document.getElementById('reference-btn');
+      button.textContent = referencesVisible ? 'Hide References' : 'Show References';
+    }
+
+    // Modal controls
+    function showExportModal() {
+      document.getElementById('export-modal').style.display = 'flex';
+    }
+
+    function closeExportModal() {
+      document.getElementById('export-modal').style.display = 'none';
+    }
+
+    function showTemplatesModal() {
+      document.getElementById('templates-modal').style.display = 'flex';
+    }
+
+    function closeTemplatesModal() {
+      document.getElementById('templates-modal').style.display = 'none';
+    }
+
+    function showToolsModal() {
+      document.getElementById('tools-modal').style.display = 'flex';
+    }
+
+    function closeToolsModal() {
+      document.getElementById('tools-modal').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
